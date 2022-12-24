@@ -1,0 +1,123 @@
+
+@page {
+  size: usletter portrait;
+  margin: 10mm;
+  margin-left: 15mm; /*give ourselves some room for the wires*/
+  /* padding: 5mm 0;*/
+  /*border-top: thin solid black;*/
+  border-bottom: thin solid black;
+  font-family: Courier, Menlo, "Courier New",  monospace;
+  /*font-family: Fira Code;/*
+
+
+/* fonts
+courier
+fira code
+monofur
+jetbrains mono
+source code pro
+space mono
+*/
+  
+  @top-left {
+    font-size: 10pt;
+    vertical-align: bottom;
+    margin: 0.3em 0;
+  }
+  @top-right {
+    font-size: 10pt;
+    vertical-align: bottom;
+    margin: 0.3em 0;
+  }
+  @bottom-left {
+    font-size: 10pt;
+    vertical-align: top;
+    margin: 0.3em 0;
+  }
+  @bottom-right {
+    font-size: 10pt;
+    vertical-align: top;
+    margin: 0.3em 0;
+  }
+}
+
+/* assign values to header/footer strings */
+
+title { string-set: title content() }
+h2, h3 { string-set: headers content() }
+div.head h2 { string-set: w3crec content() }
+
+/* place headers/footers on left/right pages */
+
+@page :left {
+  @top-left { content: string(w3crec) }
+  @top-right { content: string(title) }
+  @bottom-left { content: counter(page) }
+  @bottom-right { content: string(headers) }
+}
+
+@page :right {
+  @top-right { content: string(w3crec) }
+  @top-left { content: string(title) }
+  @bottom-right { content: counter(page) }
+  @bottom-left { content: string(headers, first) }
+}
+
+/* avoid marginalia on first page */
+
+@page :first {
+  @top-right { content: normal }
+  @top-left { content: normal }
+  @bottom-left { content: normal }
+  @bottom-right { content: normal }
+}
+
+/* general statements */
+
+
+@font-face { 
+    font-family: serif; 
+    src: local("Courier New"), local("Courier"), local("OpenSymbol");
+    /*src: local("fira code")*/
+    }
+    
+body {font-size: 10pt; padding: 0; white-space: pre; tab-size: 4;font-weight: bold;}
+
+h1 { margin: 0; font-size: 1em; page-break-before: always; 
+	font-size: 10pt; font-weight: bold;
+	text-underline: black}
+h1, h2, h3, h4, h5, h6, dt { page-break-after: avoid;}
+a {color: black; text-decoration: none;}
+/* * { text-decoration: none }*/
+img { max-width: 100% }
+
+div.titlepage { 
+		font-size: 22pt; margin-top:15 cm; top: 15cm;
+		text-align: center; }
+
+
+td,th {text-align: center; vertical-align: middle}
+
+span.chords {text-align: center;}
+span.artist {font-weight: bold;}
+span.title  {font-weight: bold;}
+
+
+
+/* add leader/page numbers to existing TOC */
+
+ul.toc, ul.toc li  {
+  font-weight: normal;
+  margin-left: 0;
+  font-weight: bold
+}
+
+ul.toc ul.toc {
+  font-weight: normal;
+  margin-left: 2em;
+  font-weight: bold
+}
+
+ul.toc a::after {
+  content: leader('.') target-counter(attr(href), page);
+}
