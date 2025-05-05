@@ -26,6 +26,8 @@ Then run
 
 ```python3 chordadder.py example-songs.xml example-songs-with-chords.xml```
 
+
+
 ```chordadder.py``` does its best to identify chords in those songs and use it to generate the second file, example-songs-with-chords.xml.
 It adds a ```<chords>....</chords>``` line to each ```<song>...</song>```
 
@@ -39,14 +41,15 @@ PrinceXML will then take the html file and use it to generate the pdf, ```exampl
 
 And you're done. Best practice is probably to put your songs in the XML file, and then run both programs back to back like this:
 
-```python3 chordadder.py example-songs.xml example-songs-with-chords.xml; python3 songbookmaker8.py example-songs-with-chords.xml```
+```python3 chordadder.py example-songs.xml example-songs-with-chords.xml; python3 songbookmaker8.py example-songs-with-chords.xml; open example-songs-with-chords.pdf```
 
 ## Modes
 
-There's a few modes you can use by specifying the name on the command line. They are detailed in ```modes.py``` which are about adding different text to the title.
+There's a few modes you can use by specifying the name on the command line. 
 
 * lulu: leaves off the first two pages (which if you print through lulu.com are a separate file)
 * discard: just alternate text on the front page
+* andy: generates only the Table of Contents, no list by artist, and sorts by song title, not artist. Good for smaller songbooks.
 
 ## guitar-chords-no-labels.zip and ukulele-chords-no-labels.zip
 
