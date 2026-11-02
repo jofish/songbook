@@ -1,0 +1,512 @@
+/* songbookweb.css — screen stylesheet for the songbook.
+   The print version uses songbookprint.css; this one is for reading on a
+   laptop, tablet or phone, with the chord columns toggleable. */
+
+:root {
+  --songsize: 13px;          /* lyric text, set by the A slider */
+  --chordsize: 50px;         /* chord diagram height, set by the box slider */
+  --ink: #0d0d0d;
+  --dim: #6b6b6b;
+  /* the inserted chorus is quieter than the words around it but not faint -
+     its own colour rather than --dim, which stays for the chrome (the song
+     count, the slider labels) that really should recede */
+  --chorusink: #474747;
+  --rule: #d8d4cc;
+  --paper: #fbfaf7;
+  --panel: #f3f0ea;
+  --accent: #7a5c2e;
+  /* chords that a transposition actually moved. A blue, so it cannot be
+     confused with --accent's brown, and 6.74:1 on the paper so it reads as
+     clearly as the words it sits above. */
+  --shifted: #005f87;
+  --mono: "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* more contrast here means LIGHTER, not darker */
+    --ink: #f4f2ee; --dim: #9a958c; --rule: #3a3733;
+    --chorusink: #bdb8ae;
+    --paper: #1c1a17; --panel: #201e1b; --accent: #d9b478;
+    --shifted: #6fc3df;            /* 8.72:1 - the light end of the same blue */
+  }
+  body { background: #161513; }
+}
+
+* { box-sizing: border-box; }
+
+html {
+  /* --barheight is set by the page's script, since the bar wraps to two rows
+     on a narrow window and an anchor jump has to clear whatever it is now */
+  --barheight: 2.2rem;
+  scroll-padding-top: calc(var(--barheight) + 0.4rem);
+  /* no scroll-behavior:smooth here: an animated jump across the book renders
+     every song it passes, which is a lot of images very fast */
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+/* ---------- control bar ---------- */
+
+/* It wraps. It used to be nowrap on one line, which was fine for two
+   instruments -- but body has overflow-x:clip, so once the checkboxes outgrew
+   the window the controls on the right were silently cropped rather than
+   scrolling. Wrapping means a fifth instrument pushes a second row instead of
+   disappearing. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+/* individual controls still never break mid-label */
+.bar label, .bar button, .booktitle, .count { white-space: nowrap; }
+
+.booktitle { font-weight: 600; letter-spacing: 0.02em; }
+
+#find {
+  flex: 0 1 10rem;             /* half what it was; the songs want the width more */
+  min-width: 4rem;
+  max-width: 10rem;
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+#find:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.nav { display: flex; align-items: center; gap: 0.15rem; flex: 0 0 auto; }
+.count {
+  color: var(--dim);
+  font-size: 0.72rem;
+  min-width: 4.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;   /* stops the bar twitching as you step */
+}
+.nav button {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--dim);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  cursor: pointer;
+  visibility: hidden;              /* only appears when stepping is possible */
+}
+.nav.stepping button { visibility: visible; }
+.nav button:hover { color: var(--accent); border-color: var(--accent); }
+
+/* sits with the search box, not with the instrument checkboxes - it is about
+   the words, not the chords, and the two groups shouldn't read as one */
+.chorusbox { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; }
+.chorusbox input { margin: 0; }
+
+.instruments { display: flex; gap: 0.6rem; margin-left: auto; }
+.instruments label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; }
+.instruments input { margin: 0; }
+
+.sl { display: flex; align-items: center; gap: 0.2rem; color: var(--dim); flex: 0 0 auto; }
+.sl input { width: 3.6rem; margin: 0; }
+
+#scrollbtn, #tocbtn, #top {
+  padding: 0.12rem 0.55rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  cursor: pointer;
+}
+#scrollbtn:hover, #tocbtn:hover, #top:hover { border-color: var(--accent); color: var(--accent); }
+
+/* while it is running the button is the obvious thing on the bar */
+#scrollbtn.going { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+#speedwrap[hidden] { display: none; }
+
+/* the speed slider belongs to the button, so they wrap as one piece rather
+   than the slider ending up on the next row by itself */
+.scrollgroup { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+
+/* ---------- contents overlay ---------- */
+
+#tocwrap, #pdfwrap {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3vh 1rem;
+}
+#tocwrap[hidden], #pdfwrap[hidden] { display: none; }
+
+#tocpanel, #pdfpanel {
+  position: relative;
+  width: min(60rem, 100%);
+  max-height: 94vh;
+  overflow-y: auto;
+  padding: 1.5rem 2rem 2rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.panelclose {
+  position: sticky;
+  top: 0;
+  float: right;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--dim);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.panelclose:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- pdf panel ---------- */
+
+#pdfpanel { width: min(34rem, 100%); }
+#pdfpanel h1 { font-size: 1.05rem; margin: 0.4rem 0 0.5rem; }
+.pdfnote { margin: 0 0 1.2rem; font-size: 0.85rem; color: var(--dim); line-height: 1.45; }
+
+ul.pdflist { margin: 0; padding: 0; list-style: none; }
+ul.pdflist li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--rule);
+}
+ul.pdflist a { font-size: 0.95rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+ul.pdflist a::before { content: "\2193\00a0"; font-weight: 400; }
+ul.pdflist a:hover { text-decoration: underline; }
+ul.pdflist span { font-size: 0.8rem; color: var(--dim); }
+
+nav#toc h1 { font-size: 1rem; margin: 0.6rem 0 0.2rem; }
+nav#toc .tocnote { font-size: 0.8rem; color: var(--dim); }
+/* the two lists sit side by side: by artist on the left, by title on the right.
+   Each is a single column of its own, so a name stays next to its neighbours
+   alphabetically instead of snaking down one half and back up the other. */
+.toccols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; align-items: start; }
+.toccol { min-width: 0; }
+ul.toc { columns: 1; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+ul.toc li { break-inside: avoid; font-size: 0.85rem; line-height: 1.7; }
+ul.toc a { color: var(--ink); text-decoration: none; }
+ul.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+/* The chart pages at the back and the Saints music are big scans - a 300dpi
+   chart is 2550px wide and would set the width of the whole document. They
+   fit the page instead. NB this must not touch .chords img, whose sizing is
+   load-bearing (see the note on it above). */
+.song > img, .lyrics img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* the chart pages, listed under the two songlists and belonging to neither */
+.toccharts {
+  margin: 1.4rem 0 0.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+  font-size: 0.85rem;
+}
+.toccharts a { color: var(--ink); text-decoration: none; margin: 0 0.7rem; }
+.toccharts a:hover { color: var(--accent); text-decoration: underline; }
+
+/* ---------- songs ---------- */
+
+main { padding: 0 0.75rem 6rem; }
+
+.song {
+  max-width: none;               /* was 62rem - the lyrics need every column
+                                    they can get before they start scrolling */
+  margin: 0;
+  padding: 1.5rem 0 1.75rem;
+  border-bottom: 1px solid var(--rule);
+  /* No content-visibility here. It made the page load faster, but skipping
+     layout for offscreen songs meant anchor jumps landed on guessed heights,
+     and with lazy images changing layout as you scroll it fed back on itself
+     and locked the browser up. loading="lazy" on the diagrams does the real
+     work for load time anyway. */
+
+}
+
+
+.song > h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.song h1 .artist { color: var(--dim); font-weight: 500; }
+.song h1 .artist::after { content: ""; }
+
+.lyrics {
+  position: relative;
+  z-index: 2;                    /* words over diagrams */
+  background: transparent;       /* so the diagrams show through */
+  font-family: var(--mono);
+  font-size: var(--songsize);
+  line-height: 1.35;
+  white-space: pre;
+  /* The songs are written with 4-column tab stops -- songbookprint.css sets
+     tab-size: 4 on body, which is what the pdf has always rendered at. The
+     browser default is 8, so every tabbed chord line on the web sat twice as
+     far right as it should: in Stand By Me the chorus A was 20 characters past
+     the word it belongs over. Matching the print stylesheet fixes the
+     alignment in all 183 songs that use tabs, and halves the indent on the
+     tabbed-in choruses as a side effect. */
+  tab-size: 4;
+  /* Long chord lines scroll sideways rather than reflowing. overflow-y MUST be
+     stated: when one axis is auto and the other is left visible, css computes
+     the visible one to auto as well, which quietly makes this a vertical scroll
+     container -- and on a touchscreen it then eats the drag instead of letting
+     the page scroll. */
+  /* clip, not auto, until the song is near the viewport -- see .near below.
+     clip crops without making this a scroll container; auto makes one. */
+  overflow-x: clip;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+}
+
+/* Only the handful of songs the observer has marked as near get to be real
+   horizontal scroll containers. There are ~300 lyric blocks and ~287 of them
+   are wider than a phone, and webkit gives every scrollable element its own
+   composited tile grid. Three hundred of those in one 478,000px document is
+   what empties an iPhone's compositor: the page paints, goes blank, flashes
+   back and goes blank again as it thrashes. An iPad has the headroom and
+   survives it. Clipping the far ones costs nothing -- you cannot see them,
+   and the box is exactly the same size either way, so nothing reflows. */
+.song.near .lyrics {
+  overflow-x: auto;
+}
+
+/* Chord diagrams run across the top of the song, one labelled row per
+   instrument, wrapping to as many lines as the width allows. They are in the
+   flow, so nothing has to reserve room for them and no title has to dodge
+   them -- which is why --chordrows, the old min-height and the 34% padding on
+   h1 are all gone. */
+.song > .chords { margin: 0 0 1.1rem; }
+.chordgroup { margin: 0 0 0.55rem; }
+.chordgroup:last-child { margin-bottom: 0; }
+.chordgroupname {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  /* clear the first diagram's negative top margin, which scales with the
+     slider, or the label rides down into it */
+  margin-bottom: calc(var(--chordsize) * 0.08);
+}
+.chordrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;       /* names line up even where diagrams differ */
+  gap: 0.2rem 0.65rem;
+}
+.chord { text-align: center; }
+
+/* Above 1000px there is width going spare and height is what runs out: five
+   instruments across the top cost 412px before a single word, most of a
+   laptop screen. So on a wide screen the diagrams go back where the printed
+   page puts them - pinned top right, out of the flow, with the words running
+   underneath - and the wrapping rows are kept for the narrow screens they
+   were designed for. The lyrics have no background of their own, so the
+   diagrams show through behind them. */
+@media (min-width: 1000px) {
+  .song { position: relative; }
+  .song > .chords {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    margin: 0;
+    width: 32%;
+    text-align: right;
+  }
+  .song > h1 { padding-right: 34%; }      /* keep a long title clear of them */
+  .lyrics { position: relative; z-index: 2; background: transparent; }
+  .chordrow { justify-content: flex-end; gap: 0.2rem 0.5rem; }
+  .chordgroupname { text-align: right; }
+}
+.chordname {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+/* width:auto is load-bearing. Each img carries width/height ATTRIBUTES so its
+   box keeps the right shape while the picture is detached, but those attributes
+   are presentational hints that map to the css width property -- without this,
+   every diagram gets drawn at its attribute width and the shapes are squashed.
+   The attributes still supply the aspect ratio, so width follows the height.
+   The diagrams are not all one shape: 140x150 guitar, 100x150 uke, 120x170. */
+.chords img {
+  display: block;
+  margin: calc(var(--chordsize) * -0.08) auto;
+  height: var(--chordsize);
+  width: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chords img { filter: invert(1) hue-rotate(180deg); }
+}
+
+/* ---------- transposing ---------- */
+
+/* The chords that actually moved are coloured, which does two jobs: it tells
+   you at a glance that "Chorus  G  D  A" was transposed while "Form a D chord"
+   was left alone, and it makes a misread chord visible instead of silent -- a
+   coloured letter sitting in the middle of a lyric is a bug reporting itself. */
+.moved { color: var(--shifted); }
+
+.capo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.2rem;
+}
+.capo button {
+  font: inherit;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+}
+.capo button:hover { border-color: var(--accent); color: var(--accent); }
+.keybox {
+  min-width: 2.1em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+  cursor: pointer;
+}
+.keybox.shifted { color: var(--shifted); font-weight: 600; }
+
+/* a key nobody has drawn a diagram for yet: the name stands on its own rather
+   than next to a broken picture */
+/* visibility, not display: the box has to keep its space or the chord block
+   gets shorter, the song moves under you, and the page jumps as you transpose */
+.chord.nodiagram img { visibility: hidden; }
+
+/* A chord with no diagram gets a question mark after its name. An empty grid
+   on its own is ambiguous - an open G on a banjo IS just strumming it - and
+   nobody should read a blank box as "play E#7aug4aug11 open". */
+.chord.nodiagram .chordname::after,
+.chord.unplayable .chordname::after { content: "?"; }
+.chord.nodiagram .chordname { color: var(--shifted); opacity: 0.75; }
+.chord.unplayable .chordname { color: var(--dim); }
+
+/* ---------- chorus expansion ---------- */
+
+/* the expansion is in the markup but hidden; ticking the box swaps which of
+   the two spans is displayed, so nothing is fetched or rebuilt */
+.cexp { display: none; }
+.expandchorus .cexp { display: inline; }
+.expandchorus .cref { display: none; }
+
+/* tint the inserted chorus so it's clear it's a repeat, not new words */
+.expandchorus .cexp { color: var(--chorusink); }
+
+/* ---------- the actual toggle ---------- */
+
+/* The .hide-<instrument> .c-<instrument> rules are NOT here. makeweb.py writes
+   them into the page from that book's own chord-table headings, so adding an
+   instrument to songbookmaker needs no edit to this file. */
+
+/* ---------- back to top ---------- */
+
+#top {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+#top.show { opacity: 1; pointer-events: auto; }
+
+/* ---------- phones ---------- */
+
+@media (max-width: 640px) {
+  /* the bar has to wrap here - nowrap made it wider than the screen, which
+     scrolled the whole page sideways and pushed the lyrics out of view */
+  .bar {
+    flex-wrap: wrap;
+    white-space: normal;
+    gap: 0.4rem 0.6rem;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .booktitle { display: none; }
+  #find { flex: 1 1 100%; max-width: none; }     /* search gets its own row */
+  .nav { order: 3; }
+  .instruments { margin-left: 0; gap: 0.5rem; }
+  .instruments { margin-left: 0; }
+  .sl input { width: 2.8rem; }
+  #tocbtn, #pdfbtn { margin-left: auto; }
+
+  html { scroll-padding-top: 5rem; }             /* the bar is two rows now */
+
+  /* Nothing to undo here any more: the diagrams are in the flow at every
+     width, and the wrapping row needs no sideways scroll of its own. */
+  /* no room for two lists abreast on a phone - stack them */
+  .toccols { grid-template-columns: 1fr; gap: 0; }
+  #tocpanel, #pdfpanel { padding: 1rem 1.2rem 1.5rem; max-height: 92vh; }
+}
+
+/* never let anything scroll the page sideways - the lyrics do their own
+   horizontal scrolling inside .lyrics.
+   NB: clip, not hidden. overflow-x:hidden turns body into a scroll container,
+   which makes position:sticky anchor to it instead of the viewport and the
+   control bar stops sticking. clip crops without that side effect. */
+body { max-width: 100%; overflow-x: clip; }
+
+/* No -webkit-overflow-scrolling: touch here, deliberately. It used to live on
+   .lyrics for momentum scrolling, which iOS has done natively inside overflow
+   elements since iOS 13, so it bought nothing -- but it promoted every one of
+   the 300-odd .lyrics blocks to its own hardware-accelerated layer with its own
+   backing store. Across the book that is ~216 megapixels of scrollable area
+   asking to be composited, and mobile safari runs out of room and drops the
+   tab: the page paints and then vanishes. */
+
+@media print {
+  .bar, #tocwrap, #pdfwrap, #top { display: none; }
+}

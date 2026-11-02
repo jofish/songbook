@@ -1,0 +1,40 @@
+# Song data, built books and the reports stay out of here - the reports quote
+# the songs they report on. Wider than the files that exist today, on purpose.
+
+# song data - everything but the examples
+*.xml
+!example-songs.xml
+!example-songs-with-chords.xml
+
+# built books
+songbook-*.html
+songbook-*.pdf
+songbook-*.old
+songbook-web.html
+discard-web.html
+discardpile*
+*.pdf
+!example-songs-with-chords.pdf
+
+# generated reports
+*-chordlines.txt
+*-missingdiagrams.txt
+chorus-review.txt
+chorus-handtag-list.txt
+song*edits.txt
+changes*.txt
+
+# anchored on specific song text, so it is local only
+handtags.py
+
+# private lists and local settings
+andy-songbook.txt
+my-settings.sh
+my_settings.py
+upload-target.sh
+
+# scratch
+__pycache__/
+*.pyc
+.DS_Store
+*.zip

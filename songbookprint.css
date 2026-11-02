@@ -1,0 +1,134 @@
+/* songbookprint.css — songbook print stylesheet for PrinceXML */
+
+/* fonts tried: courier, fira code, monofur, jetbrains mono, source code pro, space mono */
+
+@page {
+  size: usletter portrait;
+  margin: 12mm 13mm;
+  border-bottom: thin solid black;
+  font-family: Courier, Menlo, "Courier New", monospace;
+
+  @top-left {
+    font-size: 10pt;
+    vertical-align: bottom;
+    margin: 0.3em 0;
+  }
+  @top-right {
+    font-size: 10pt;
+    vertical-align: bottom;
+    margin: 0.3em 0;
+  }
+  @bottom-left {
+    font-size: 10pt;
+    vertical-align: top;
+    margin: 0.3em 0;
+  }
+  @bottom-right {
+    font-size: 10pt;
+    vertical-align: top;
+    margin: 0.3em 0;
+  }
+}
+
+/* assign values to header/footer strings */
+
+title { string-set: title content() }
+h2, h3 { string-set: headers content() }
+div.head h2 { string-set: w3crec content() }
+
+/* place headers/footers on left/right pages */
+/* margins: 15mm on the inside edge for the coil, 12.7mm (0.5in) outside */
+
+@page :left {
+  @top-left { content: string(w3crec) }
+  @top-right { content: string(title) }
+  @bottom-left { content: counter(page) }
+  @bottom-right { content: string(headers) }
+}
+
+@page :right {
+  @top-right { content: string(w3crec) }
+  @top-left { content: string(title) }
+  @bottom-right { content: counter(page) }
+  @bottom-left { content: string(headers, first) }
+}
+
+/* avoid marginalia on first page */
+
+@page :first {
+  @top-right { content: normal }
+  @top-left { content: normal }
+  @bottom-left { content: normal }
+  @bottom-right { content: normal }
+}
+
+/* general statements */
+
+@font-face {
+  font-family: serif;
+  src: local("Courier New"), local("Courier"), local("OpenSymbol");
+}
+
+body { font-size: 10pt; padding: 0; white-space: pre; tab-size: 4; font-weight: bold; }
+
+h1 { margin: 0; margin-bottom: 0; font-size: 10pt; font-weight: bold;
+     page-break-before: always;
+     text-decoration: underline; }
+
+h1, h2, h3, h4, h5, h6, dt { page-break-after: avoid; }
+
+a { color: black; text-decoration: none; }
+img { max-width: 100% }
+
+div.titlepage { 
+  font-size: 22pt;
+  margin-top: 5cm;
+  text-align: center;
+  page-break-after: always;
+}
+
+div.tocheader {
+  font-size: 22pt;
+  text-align: center;
+}
+
+span.tocnote { font-size: 10pt; }
+
+td, th { text-align: center; vertical-align: middle; padding: 0; margin: 0; line-height: 1; }
+
+span.chords { text-align: center; }
+span.artist { font-weight: bold; }
+span.title { font-weight: bold; }
+
+/* chord diagram tables, absolutely positioned top-right of each song */
+
+.chords table { border-spacing: 0; }
+.chords img { display: block; margin: -6px auto; } /* -6px claws back transparent padding in the PNGs; gets us 19 chords/page, -5 shifts the column to the edge */
+.chords td, .chords th { padding: 0; line-height: 0; vertical-align: middle; }
+.chords td:first-child { line-height: 1; text-align: right; padding-right: 4px; } 
+
+
+span.fairuse { font-size: 12pt; white-space: normal; display: block; font-style: italic;}
+
+/* table of contents, with leader dots and page numbers */
+
+ul.toc {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+  font-weight: bold;
+}
+
+ul.toc li {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+ul.toc ul.toc {
+  margin-left: 0;
+  padding-left: 2em;
+}
+
+ul.toc a::after {
+  content: leader('.') target-counter(attr(href), page);
+}

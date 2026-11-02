@@ -3,17 +3,34 @@ import xml.dom.minidom, string, re, codecs, sys
 
 #guitardict={'D':'D','E':'E','Gmodo2': 'Gmodo2', 'C79': 'C7_9_', 'Am.G': 'Am.G', 'C6.9': 'C6.9', 'Bm7_b5_': 'Bm7_b5_', 'Dm79': 'Dm7_9_', 'Emod2': 'Emod2', 'D79': 'D7_9_', 'Fstm7_b5_': 'Fstm7_b5_', 'G': 'G', 'B7_b9_': 'B7_b9_', 'Em7': 'Em7', 'C7M2': 'C7M2', 'E7.Gst': 'E7.Gst', 'Dm7': 'Dm7', 'Cm7': 'Cm7', 'Fstm7modo2': 'Fstm7modo2', 'Cstm7': 'Cstm7', 'C7M_9_': 'C7M_9_', 'Fstm7b5': 'Fstm7_b5_', 'A7Mmodo2': 'A7Mmodo2', 'F7M': 'F7M', 'A#': 'Bb', 'Asus2': 'Asus2', 'Asus4': 'Asus4', 'Bb': 'Bb', 'G7M': 'G7M', 'Dm7_9_': 'Dm7_9_', 'Cm': 'Cm', 'Fstm': 'Fstm', 'B7b9': 'B7_b9_', 'Bm7b5': 'Bm7_b5_', 'A7': 'A7', 'Dmod2': 'Dmod2', 'E7': 'E7', 'Gstm': 'Gstm', 'C7': 'C7', 'Fm': 'Fm', 'Bm7': 'Bm7', 'A': 'A', 'G7': 'G7', 'C': 'C', 'D7_9_': 'D7_9_', 'Gstm7.png': 'Gstm7.png', 'D': 'D', 'C7M9': 'C7M_9_', 'F': 'F', 'Asus4_2': 'Asus4_2', 'Fm7': 'Fm7', 'Fstm7': 'Fstm7', 'A7M': 'A7M', 'Dm': 'Dm', 'Asus42': 'Asus4_2', 'Gm7modo2': 'Gm7modo2', 'C7_9_': 'C7_9_', 'G7modo2': 'G7modo2', 'Gm7': 'Gm7', 'E7_b9_': 'E7_b9_', 'Em': 'Em', 'E7b9': 'E7_b9_', 'Dm7mod2': 'Dm7mod2', 'F6': 'F6', 'F7': 'F7', 'G7.4': 'G7.4', 'Fm7mod2': 'Fm7mod2', 'Am': 'Am', 'D#': 'Eb', 'Eb': 'Eb', 'B7': 'B7', 'C7M': 'C7M', 'Dmmod2': 'Dmmod2', 'F7mod2': 'F7mod2', 'D7': 'D7', 'B': 'B', 'Am7': 'Am7', 'D7M': 'D7M'}
 #ukedict={'Fmaj9': 'Fmaj9', 'E':'E','Gdim': 'Gdim', 'Fmaj7': 'Fmaj7', 'Abmaj7': 'Abmaj7', 'BmM7': 'BmM7', 'Abmaj9': 'Abmaj9', 'G7': 'G7', 'Asus4': 'Asus4', 'Bb': 'Bb', 'Bm': 'Bm', 'D#aug': 'Ebaug', 'G#': 'Ab', 'blank.png': 'blank.png', 'G7sus4': 'G7sus4', 'Aadd9': 'Aadd9', 'Caug': 'Caug', 'A7': 'A7', 'Bsus4': 'Bsus4', 'A#maj9': 'Bbmaj9', 'C7sus4': 'C7sus4', 'Gb7': 'Gb7', 'A#maj7': 'Bbmaj7', 'B7': 'B7', 'Gb': 'Gb', 'Ebaug': 'Ebaug', 'Gm': 'Gm', 'Csm': 'Csm', 'Gsus4': 'Gsus4', 'Dm7': 'Dm7', 'A#m': 'Bbm', 'G#maj9': 'Abmaj9', 'G#aug': 'Abaug', 'G#maj7': 'Abmaj7', 'Fsus4': 'Fsus4', 'F#7': 'Gb7', 'F#m7-5': 'Gbm7-5', 'Dsus4': 'Dsus4', 'F#': 'Gb', 'E9': 'E9', 'Eaug': 'Eaug', 'Dsus2': 'Dsus2', 'E7': 'E7', 'C': 'C', 'G': 'G', 'Fdim': 'Fdim', 'Gbm7-5': 'Gbm7-5', 'A#6': 'Bb6', 'Em': 'Em', 'Eb': 'Eb', 'Bbdim': 'Bbdim', 'F#m': 'Gbm', 'Bbm': 'Bbm', 'Bdim': 'Bdim', 'F#maj9': 'Gbmaj9', 'Csus2': 'Csus2', 'Em7': 'Em7', 'Cmaj7': 'Cmaj7', 'Csus4': 'Csus4', 'G#dim': 'Abdim', 'Cmaj9': 'Cmaj9', 'Bm7-5': 'Bm7-5', 'G#m7-5': 'Abm7-5', 'C7': 'C7', 'Fm': 'Fm', 'Dbdim': 'Dbdim', 'B': 'B', 'Fadd9': 'Fadd9', 'F': 'F', 'Gbm': 'Gbm', 'Ebmaj7': 'Ebmaj7', 'Gadd9': 'Gadd9', 'Bb6': 'Bb6', 'Ebmaj9': 'Ebmaj9', 'Gm7': 'Gm7', 'C#dim': 'Dbdim', 'Cm': 'Cm', 'Cadd9': 'Cadd9', 'C6': 'C6', 'Amaj7': 'Amaj7', 'Bm7': 'Bm7', 'Abaug': 'Abaug', 'Gbmaj9': 'Gbmaj9', 'Am7': 'Am7', 'A#dim': 'Bbdim', 'Bbmaj7': 'Bbmaj7', 'Ddim': 'Ddim', 'Bbmaj9': 'Bbmaj9', 'Abm7-5': 'Abm7-5', 'D': 'D', 'A#': 'Bb', 'Dm': 'Dm', 'Em7-5': 'Em7-5', 'Dmaj7': 'Dmaj7', 'A': 'A', 'D#maj9': 'Ebmaj9', 'D#maj7': 'Ebmaj7', 'Aaug': 'Aaug', 'Abdim': 'Abdim', 'Ab': 'Ab', 'Am': 'Am', 'D#': 'Eb', 'Gmaj9': 'Gmaj9', 'D6': 'D6', 'D7': 'D7'}
-#guitardict = json5.load(open('/Users/jofish/Dropbox/jlaptop/music/chordpro/lib/App/Music/ChordPro/res/config/guitar.json',encoding="UTF-8"))
-#ukuleledict = json5.load(open("/Users/jofish/Dropbox/jlaptop/music/chordpro/lib/App/Music/ChordPro/res/config/ukulele.json",encoding="UTF-8"))
 
 #let's just find them algorithmically and live dangerously
 
 allchords = []
 
+# A tab staff is not a chord line. Strip the dashes out of "E---3---------"
+# and you get E3, which looks exactly like a chord: right first letter, right
+# last character, no filler word in it. Girl You'll Be A Woman Soon has one of
+# these and E3 is what came out of it. Three dashes in a row is the giveaway -
+# no chord line has them, every tab line does.
+TABLINE = re.compile(r'-{3,}')
+
+# Anything in [square brackets] used to count as a chord unless it matched a
+# word on the nonchordwords list, and that list has no hook, fade or slower in
+# it - so [Hook], [fade], [slower] and [0222] all became chord-table rows with
+# a blank grid. A chord starts with a note name, so insist on one. [Chorus] and
+# [Bridge] do start with a note letter, but nonchordwords still catches those.
+STARTSONANOTE = re.compile(r'^[A-G][#b]?')
+
 def getText(nodelist):	#this just deals with XML
+	#recurse into nested elements. <lyrics> holds a <chorus> element now, and
+	#without this the whole chorus is invisible here - every chord that only
+	#appears inside a chorus goes missing from that song's chord table.
+	#Rolling in the Deep lost its E7 exactly this way.
 	rc = ""
 	for node in nodelist:
 		if node.nodeType == node.TEXT_NODE: rc = rc + node.data
+		elif node.nodeType == node.ELEMENT_NODE: rc = rc + getText(node.childNodes)
 	return rc
 
 def sortedDictValues3(adict): 
@@ -63,6 +80,7 @@ for song in main.getElementsByTagName("song"):
 	for chord in re.findall("\[.*?\]",lyrics):
 		chord=chord.strip('[').strip(']')
 		badchord=False
+		if not STARTSONANOTE.match(chord):badchord=True   #not a chord at all
 		for filler in nonchordwords:
 			if filler in chord.lower():badchord=True
 		if not badchord: countofchords+=1
@@ -71,6 +89,7 @@ for song in main.getElementsByTagName("song"):
 	#now let's look for chords that are not in []s. this bit might get revisited one of these days
 	for line in lyrics.split('\n'):
 		if len(line)<1:continue
+		if TABLINE.search(line):continue   #tab staff, not chords
 		if float(len(line.replace(" ",'')))/float(len(line))<0.5:#if the line is more than half whitespace
 			for chord in line.replace('\\',' ').split(): #fix all the slashes. this is a bad hack and we will fix in the future
 				badchord=False
